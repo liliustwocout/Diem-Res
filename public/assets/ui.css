@@ -464,3 +464,13 @@ button,a,.tile,.tcard,.pill,.nav{touch-action:manipulation;-webkit-tap-highlight
   .li{padding:10px 2px}
 }
 @media(max-width:860px){.toolbar:has(#df) .input{min-width:0;box-sizing:border-box;padding:0 6px;font-size:14px}.toolbar:has(#df)>*{min-width:0}}
+
+/* màn Bàn (quản trị): thẻ to, nút to, 1 cột cho dễ bấm */
+@media(max-width:860px){
+  .admin-tables{grid-template-columns:1fr;gap:12px}
+  .atc{padding:18px 18px;min-height:84px;border-radius:18px}
+  .atc b{font-size:24px}
+  .atc .btn.sm.icon{width:56px;min-height:56px;border-radius:14px}
+  .atc .btn .ic{width:26px;height:26px}
+  .atc .acts{gap:10px}
+}
