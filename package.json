@@ -1,0 +1,8 @@
+{
+  "name": "diem-res",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Website quản lý nhà hàng - MVP",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=22.13" }
+}
