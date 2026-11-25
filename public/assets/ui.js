@@ -174,7 +174,7 @@ function start() {
   shell();
 }
 function shell() {
-  document.body.classList.toggle('dark', me.role === 'kitchen');
+  document.body.classList.remove('dark'); // toàn bộ giao diện dùng tông sáng
   const t = TABS[me.role];
   $('#app').innerHTML = `<div class="shell"><nav class="rail" aria-label="Điều hướng">
     <div class="brand"><i class="dogmark">${DOGMARK}</i>Diem Res</div>
@@ -329,8 +329,8 @@ const V = {
     $v().innerHTML = skeleton(6);
     refresh = safe(async () => {
       const menu = await get('/api/menu');
-      $('#topx').innerHTML = `<span class="muted">Bấm vào món để đổi trạng thái. Nhân viên sẽ không gọi được món đã hết.</span>`;
-      $v().innerHTML = `<div class="stockgrid">${menu.map(m => `<button class="stockrow ${m.available ? '' : 'out'}" data-a="t" data-id="${m.id}" data-v="${m.available ? 0 : 1}" role="switch" aria-checked="${!!m.available}"><span>${esc(m.name)}</span><span class="switch ${m.available ? 'on' : ''}"></span></button>`).join('')}</div>`;
+      $('#topx').innerHTML = '';
+      $v().innerHTML = `<p class="muted" style="margin:0 0 12px">Bấm vào món để đổi trạng thái. Nhân viên sẽ không gọi được món đã hết.</p><div class="stockgrid">${menu.map(m => `<button class="stockrow ${m.available ? '' : 'out'}" data-a="t" data-id="${m.id}" data-v="${m.available ? 0 : 1}" role="switch" aria-checked="${!!m.available}"><span>${esc(m.name)}</span><span class="switch ${m.available ? 'on' : ''}"></span></button>`).join('')}</div>`;
     });
     on({ t: safe(async el => { await put('/api/menu/' + el.dataset.id, { available: +el.dataset.v }); toast(el.dataset.v === '0' ? 'Đã báo hết món' : 'Đã có lại món'); }) });
     refresh();

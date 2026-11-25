@@ -525,3 +525,8 @@ button,a,.tile,.tcard,.pill,.nav{touch-action:manipulation;-webkit-tap-highlight
 @media(max-width:860px){
   .toolbar:has([data-a="back"]){position:sticky;top:0;z-index:18;margin:-12px -12px 8px;padding:10px 12px;background:var(--bg,#f4f4ef);box-shadow:0 6px 12px -10px #0006}
 }
+@media(max-width:860px){
+  .top h1{white-space:nowrap;flex:none}
+  .top>div:last-child{flex:1;display:flex;justify-content:flex-end}
+  .kpis{display:flex;gap:6px}.kpis .tag{font-size:13px;padding:5px 10px}
+}
