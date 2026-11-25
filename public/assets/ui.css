@@ -502,3 +502,21 @@ button,a,.tile,.tcard,.pill,.nav{touch-action:manipulation;-webkit-tap-highlight
   .atc .btn.sm.icon{flex:1 1 40%;width:auto;min-height:48px}
   .atc .btn .ic{width:22px;height:22px}
 }
+
+/* bàn trống: chữ đen, viền nét liền */
+.tcard.free{color:#111;border-style:solid;border-color:#c9d3cf;background:transparent}
+.tcard.free:hover{color:#111;border-color:var(--jade)}
+.tcard.free b,.tcard.free .st,.tcard.free .amt{color:#111}
+
+/* gọi món trên điện thoại: danh sách gọn từng dòng để thấy nhiều món cùng lúc */
+@media(max-width:860px){
+  .tiles{grid-template-columns:1fr;gap:6px}
+  .tile{flex-direction:row;align-items:center;justify-content:flex-start;min-height:60px;padding:6px 12px 6px 6px;gap:10px;border-radius:12px}
+  .tile .pic{width:48px;height:48px;aspect-ratio:auto;border-radius:9px;flex:none}
+  .tile b{flex:1;min-width:0;font-size:15px;line-height:1.25;overflow-wrap:anywhere}
+  .tile span{flex:none;font-size:14px;white-space:nowrap}
+  .tile>b:first-child,.tile>span:first-child{margin-left:6px}
+  .tile .qty{position:static;order:3;flex:none;min-width:26px;height:26px;font-size:13px;margin-left:2px}
+  .menu-tools{margin-bottom:8px}
+  .chips{margin-bottom:6px}
+}

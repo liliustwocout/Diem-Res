@@ -189,6 +189,8 @@ function shell() {
   V[tab]();
 }
 const $v = () => $('#v');
+// Ghi HTML vào phần tử chỉ khi khác lần trước (tránh dựng lại ảnh/hoạt ảnh mỗi lần tự cập nhật gây nháy)
+const setH = (el, h) => { if (el._h !== h) { el.innerHTML = h; el._h = h; } };
 const skeleton = n => `<div class="floor">${'<div class="skel"></div>'.repeat(n)}</div>`;
 const on = (map, ev = 'click') => { $v()['on' + ev] = e => { const el = e.target.closest('[data-a]'); if (el && map[el.dataset.a]) map[el.dataset.a](el, e); }; };
 
@@ -216,11 +218,12 @@ const V = {
     function paintFloor() {
       built = false;
       $('.top').style.display = '';
-      $('#topx').innerHTML = `<div class="legend"><span style="--c:#c7d2cd">Trống</span><span style="--c:#e5a000">Bếp đang làm</span><span style="--c:#1f8a58">Sẵn sàng tính tiền</span></div>`;
-      $v().innerHTML = tables.length ? `<div class="floor">${tables.map(t => {
+      if (!$('#topx .legend')) $('#topx').innerHTML = `<div class="legend"><span style="--c:#c7d2cd">Trống</span><span style="--c:#e5a000">Bếp đang làm</span><span style="--c:#1f8a58">Sẵn sàng tính tiền</span></div>`;
+      const fh = tables.length ? `<div class="floor">${tables.map(t => {
         const s = st(t);
         return `<button class="tcard ${s.k}" data-a="open" data-id="${t.id}"><b>${esc(t.name)}</b><span class="st">${s.l}</span>${t.order ? `<span class="age" data-since="${t.order.created_at}">${ago(t.order.created_at)}</span><span class="amt">${money(t.order.total)}</span>` : '<span class="amt" style="font-size:14px;font-weight:600">Bấm để mở bàn</span>'}</button>`;
       }).join('')}</div>` : `<div class="card empty"><b>Chưa có bàn nào</b>Quản trị thêm bàn ở mục Bàn.</div>`;
+      if (!($v().firstElementChild && $v().firstElementChild._h === fh)) { $v().innerHTML = fh; $v().firstElementChild._h = fh; }
       on({ open: el => { sel = +el.dataset.id; paint(); } });
     }
     function paintPos() {
@@ -257,19 +260,19 @@ const V = {
       const o = cur().order, count = {};
       (o ? o.items : []).filter(i => i.status === 'draft').forEach(i => count[i.menu_id] = (count[i.menu_id] || 0) + i.qty);
       const list = menu.filter(m => (cat === 'Tất cả' || (m.category || 'Khác') === cat) && m.name.toLowerCase().includes(q.trim().toLowerCase()));
-      $('#tiles').innerHTML = list.length ? list.map(m => `<button class="tile ${m.available ? '' : 'off'}" data-a="add" data-id="${m.id}" ${canOrder ? '' : 'disabled'}>${count[m.id] ? `<i class="qty">${count[m.id]}</i>` : ''}${m.image ? `<img class="pic" src="${esc(m.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<b>${esc(m.name)}</b><span>${m.available ? money(m.price) : 'Hết món'}</span></button>`).join('') : `<div class="card empty" style="grid-column:1/-1"><b>Không thấy món nào</b>Thử từ khoá khác hoặc chọn nhóm Tất cả.</div>`;
+      setH($('#tiles'), list.length ? list.map(m => `<button class="tile ${m.available ? '' : 'off'}" data-a="add" data-id="${m.id}" ${canOrder ? '' : 'disabled'}>${count[m.id] ? `<i class="qty">${count[m.id]}</i>` : ''}${m.image ? `<img class="pic" src="${esc(m.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<b>${esc(m.name)}</b><span>${m.available ? money(m.price) : 'Hết món'}</span></button>`).join('') : `<div class="card empty" style="grid-column:1/-1"><b>Không thấy món nào</b>Thử từ khoá khác hoặc chọn nhóm Tất cả.</div>`);
     }
     function paintTicket() {
       const t = cur(), o = t.order, items = o ? o.items : [], drafts = items.filter(i => i.status === 'draft');
       const label = { draft: 'Chưa gửi', new: 'Chờ bếp', cooking: 'Đang làm', done: 'Đã xong' };
-      $('#ticket').innerHTML = `<div class="ticket-h"><h3>Đơn ${esc(t.name)}</h3>${o ? `<span class="muted" style="font-size:13px">Mở lúc ${timeOf(o.created_at)}</span>` : ''}</div>
+      setH($('#ticket'), `<div class="ticket-h"><h3>Đơn ${esc(t.name)}</h3>${o ? `<span class="muted" style="font-size:13px">Mở lúc ${timeOf(o.created_at)}</span>` : ''}</div>
       <div class="lines">${items.length ? items.map(i => `<div class="line"><span class="nm">${esc(i.name)}</span><span class="pr">${money(i.price * i.qty)}</span>
         <div class="sub">${i.status === 'draft' && canOrder ? `<span class="stepper"><button data-a="dec" data-id="${i.id}" aria-label="Giảm">${ic('minus')}</button><b>${i.qty}</b><button data-a="inc" data-mid="${i.menu_id}" aria-label="Tăng">${ic('plus')}</button></span>` : `<span class="muted">×${i.qty}</span>`}
         <span style="display:flex;gap:8px;align-items:center"><span class="tag dot ${i.status}">${label[i.status]}</span>${i.status === 'draft' && canOrder ? `<button class="btn sm icon danger" data-a="rm" data-id="${i.id}" aria-label="Xoá món">${ic('trash')}</button>` : ''}</span></div></div>`).join('')
         : `<div class="empty"><b>Bàn chưa có món</b>Bấm vào món bên trái để thêm.</div>`}</div>
       ${canOrder ? `<div class="ticket-f"><div class="total"><span>Tổng cộng</span><b>${money(o ? o.total : 0)}</b></div>
         ${drafts.length ? `<button class="btn ok lg" data-a="send">${ic('send')}Gửi bếp (${drafts.reduce((s, i) => s + i.qty, 0)} món)</button>`
-        : o ? `<button class="btn primary lg" data-a="pay">Thanh toán</button>` : `<p class="muted" style="text-align:center">Chọn món bên trái để bắt đầu.</p>`}</div>` : ''}`;
+        : o ? `<button class="btn primary lg" data-a="pay">Thanh toán</button>` : `<p class="muted" style="text-align:center">Chọn món bên trái để bắt đầu.</p>`}</div>` : ''}`);
       const f = $('#fabt'); if (f) f.textContent = `Đơn · ${money(o ? o.total : 0)}`;
     }
     async function payFlow() {
