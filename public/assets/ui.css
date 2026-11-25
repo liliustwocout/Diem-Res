@@ -417,3 +417,12 @@ button,a,.tile,.tcard,.pill,.nav{touch-action:manipulation;-webkit-tap-highlight
   .floor,.tiles,.admin-tables{grid-template-columns:1fr}
   .stats{grid-template-columns:1fr}
 }
+
+@media(max-width:860px){
+  /* hàng tài khoản: tên + nhãn ở trên, nút thao tác xuống dòng dưới */
+  .li.user{flex-wrap:wrap;row-gap:10px}
+  .li.user .grow{flex:1 1 120px}
+  .li.user .tag{flex:none}
+  .li.user .acts{flex:1 1 100%;display:flex;gap:8px}
+  .li.user .acts .btn{flex:1;min-height:44px}
+}
