@@ -340,3 +340,4 @@ body{font-size:18px;line-height:1.5}
 .brand i.dogmark{width:72px;height:54px}
 .rail .brand{padding-bottom:16px}
 @media(max-width:860px){.dog{width:240px}}
+[hidden]{display:none!important}

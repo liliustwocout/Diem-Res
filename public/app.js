@@ -27,7 +27,7 @@ const P = {
 const ic = n => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
 
 const DOGMARK = '<svg viewBox="20 10 380 280" fill="none" aria-hidden="true"><ellipse cx="200" cy="275" rx="140" ry="9" fill="#00000033"/><g class="la" style="transform-origin:215px 200px"><path d="M215 200L240 258" stroke="#d9c79f" stroke-width="22" stroke-linecap="round"/><ellipse cx="245" cy="266" rx="17" ry="9" fill="#e8dcc0"/></g><g class="lb" style="transform-origin:115px 200px"><path d="M115 200L100 258" stroke="#d9c79f" stroke-width="22" stroke-linecap="round"/><ellipse cx="96" cy="266" rx="17" ry="9" fill="#e8dcc0"/></g><g class="bodyg"><path class="tail" d="M82 150C48 128 44 92 64 76" stroke="#f3e6c8" stroke-width="18" stroke-linecap="round" fill="none"/><ellipse cx="170" cy="165" rx="96" ry="55" fill="#f3e6c8"/><path d="M98 135C130 102 205 106 238 132 212 152 150 158 98 135z" fill="#e5a000"/><ellipse cx="250" cy="150" rx="42" ry="38" fill="#f3e6c8"/><circle cx="275" cy="120" r="48" fill="#f3e6c8"/><path d="M255 92C228 90 218 132 232 162 250 168 268 142 270 110z" fill="#e5a000"/><ellipse cx="318" cy="136" rx="38" ry="26" fill="#fff8e6"/><circle cx="351" cy="125" r="11" fill="#10201e"/><path d="M328 149q14 7 28-3" stroke="#10201e" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M338 150c0 17 17 17 17 0z" fill="#d6372a"/><circle cx="293" cy="108" r="8" fill="#10201e"/><circle cx="296" cy="105" r="2.6" fill="#fff"/><path d="M236 148l34 8-22 28z" fill="#d6372a"/><g transform="rotate(8 278 70)"><circle cx="262" cy="50" r="17" fill="#fff"/><circle cx="294" cy="50" r="17" fill="#fff"/><circle cx="278" cy="38" r="21" fill="#fff"/><rect x="250" y="56" width="56" height="26" rx="6" fill="#fff"/></g></g><g class="la" style="transform-origin:135px 205px"><path d="M135 205L160 258" stroke="#f3e6c8" stroke-width="22" stroke-linecap="round"/><ellipse cx="165" cy="266" rx="17" ry="9" fill="#fff8e6"/></g><g class="lb" style="transform-origin:200px 205px"><path d="M200 205L180 258" stroke="#f3e6c8" stroke-width="22" stroke-linecap="round"/><ellipse cx="176" cy="266" rx="17" ry="9" fill="#fff8e6"/></g></svg>';
-let me = null, tab = null, es = null, refresh = () => {}, live = [], ticking = null, timer = null;
+let me = null, tab = null, es = null, refresh = () => {}, live = [], ticking = null, timer = null, poll = null;
 
 /* ============ toast & hộp thoại ============ */
 function toast(msg, err) {
@@ -81,6 +81,7 @@ async function api(method, url, data) {
   const j = await r.json().catch(() => ({}));
   if (r.status === 401 && url !== '/api/login' && url !== '/api/me') { me = null; showLogin(); throw new Error('401'); }
   if (!r.ok) { toast(j.error || 'Có lỗi xảy ra', true); throw new Error(j.error); }
+  if (method !== 'GET' && !/\/api\/(login|logout)$/.test(url)) setTimeout(() => refresh(), 0); // cập nhật lại màn hình sau khi thay đổi dữ liệu
   return j;
 }
 const get = u => api('GET', u), post = (u, d) => api('POST', u, d || {}), put = (u, d) => api('PUT', u, d || {}), del = u => api('DELETE', u);
@@ -103,8 +104,7 @@ function tickTimes() {
 
 /* ============ đăng nhập ============ */
 function showLogin() {
-  if (es) es.close();
-  clearInterval(timer);
+  clearInterval(poll); clearInterval(timer);
   document.body.classList.remove('dark');
   $('#app').innerHTML = `<div class="login">
     <section class="login-art" aria-hidden="true">
@@ -116,7 +116,7 @@ function showLogin() {
       <div class="field"><label for="p">Mật khẩu</label><input class="input" id="p" type="password" autocomplete="current-password"></div>
       <div class="err" id="le" role="alert"></div>
       <button class="btn primary lg" style="width:100%" type="submit">Vào hệ thống</button>
-      <div class="demo" aria-label="Tài khoản mẫu"><span class="muted" style="font-size:13px;width:100%">Tài khoản mẫu, bấm để điền:</span>
+      <div class="demo" aria-label="Tài khoản mẫu" ${['localhost', '127.0.0.1'].includes(location.hostname) ? '' : 'hidden'}><span class="muted" style="font-size:13px;width:100%">Tài khoản mẫu, bấm để điền:</span>
         ${[['admin', 'admin123', 'Quản trị'], ['nhanvien', '123456', 'Nhân viên'], ['bep', '123456', 'Bếp'], ['ketoan', '123456', 'Kế toán']].map(([u, p, l]) => `<button type="button" data-u="${u}" data-p="${p}">${l}</button>`).join('')}</div>
     </form></section></div>`;
   $('.demo').onclick = e => { const b = e.target.closest('[data-u]'); if (b) { $('#u').value = b.dataset.u; $('#p').value = b.dataset.p; $('#p').focus(); } };
@@ -138,9 +138,9 @@ P.ban = '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>';
 function start() {
   tab = TABS[me.role][0][0];
   if (es) es.close();
-  es = new EventSource('/api/events');
-  const fire = debounce(() => refresh(), 60);
-  es.onmessage = e => { if (live.includes(e.data)) fire(); };
+  // Không dùng kết nối giữ mở (Vercel không hỗ trợ): tự cập nhật mỗi 3 giây ở màn cần xem trực tiếp.
+  clearInterval(poll);
+  poll = setInterval(() => { if (live.length && !document.hidden && !document.querySelector('.overlay')) refresh(); }, 3000);
   clearInterval(timer); timer = setInterval(tickTimes, 20000);
   shell();
 }
@@ -303,7 +303,7 @@ const V = {
 
   /* ----- admin: thực đơn ----- */
   menu() {
-    live = ['menu'];
+    live = [];
     let menu = [];
     $v().innerHTML = skeleton(6);
     const fields = (m = {}) => [{ name: 'name', label: 'Tên món', value: m.name, placeholder: 'Ví dụ: Phở bò' }, { name: 'price', label: 'Giá (đồng)', type: 'number', value: m.price }, { name: 'category', label: 'Nhóm', value: m.category, placeholder: 'Món chính, Đồ uống...' }];
@@ -322,7 +322,7 @@ const V = {
     refresh();
   },
   tablesAdm() {
-    live = ['tables'];
+    live = [];
     let tables = [];
     $v().innerHTML = skeleton(6);
     refresh = safe(async () => {
@@ -359,7 +359,7 @@ const V = {
 
   /* ----- doanh thu ----- */
   report() {
-    live = ['report', 'tables'];
+    live = [];
     let from = today(), to = today(), preset = 'today';
     const range = p => {
       const d = new Date(), t = today();
@@ -388,7 +388,7 @@ const V = {
     refresh();
   },
   expenses() {
-    live = ['report'];
+    live = [];
     let list = [];
     $v().innerHTML = skeleton(3);
     refresh = safe(async () => {

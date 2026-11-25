@@ -1,4 +1,7 @@
 data.db*
+test.db*
 node_modules/
 .env
+.env.*
 .vercel
+.admin-password.txt
