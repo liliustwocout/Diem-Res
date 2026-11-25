@@ -75,6 +75,8 @@ function formBox(title, fields, okText = 'Lưu') {
   });
 }
 
+const thumb = m => m.image ? `<img class="thumb" src="${esc(m.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+
 /* ============ API ============ */
 async function api(method, url, data) {
   const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: data ? JSON.stringify(data) : undefined });
@@ -225,7 +227,7 @@ const V = {
       const o = cur().order, count = {};
       (o ? o.items : []).filter(i => i.status === 'draft').forEach(i => count[i.menu_id] = (count[i.menu_id] || 0) + i.qty);
       const list = menu.filter(m => (cat === 'Tất cả' || (m.category || 'Khác') === cat) && m.name.toLowerCase().includes(q.trim().toLowerCase()));
-      $('#tiles').innerHTML = list.length ? list.map(m => `<button class="tile ${m.available ? '' : 'off'}" data-a="add" data-id="${m.id}" ${canOrder ? '' : 'disabled'}>${count[m.id] ? `<i class="qty">${count[m.id]}</i>` : ''}<b>${esc(m.name)}</b><span>${m.available ? money(m.price) : 'Hết món'}</span></button>`).join('') : `<div class="card empty" style="grid-column:1/-1"><b>Không thấy món nào</b>Thử từ khoá khác hoặc chọn nhóm Tất cả.</div>`;
+      $('#tiles').innerHTML = list.length ? list.map(m => `<button class="tile ${m.available ? '' : 'off'}" data-a="add" data-id="${m.id}" ${canOrder ? '' : 'disabled'}>${count[m.id] ? `<i class="qty">${count[m.id]}</i>` : ''}${m.image ? `<img class="pic" src="${esc(m.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<b>${esc(m.name)}</b><span>${m.available ? money(m.price) : 'Hết món'}</span></button>`).join('') : `<div class="card empty" style="grid-column:1/-1"><b>Không thấy món nào</b>Thử từ khoá khác hoặc chọn nhóm Tất cả.</div>`;
     }
     function paintTicket() {
       const t = cur(), o = t.order, items = o ? o.items : [], drafts = items.filter(i => i.status === 'draft');
@@ -306,17 +308,17 @@ const V = {
     live = [];
     let menu = [];
     $v().innerHTML = skeleton(6);
-    const fields = (m = {}) => [{ name: 'name', label: 'Tên món', value: m.name, placeholder: 'Ví dụ: Phở bò' }, { name: 'price', label: 'Giá (đồng)', type: 'number', value: m.price }, { name: 'category', label: 'Nhóm', value: m.category, placeholder: 'Món chính, Đồ uống...' }];
+    const fields = (m = {}) => [{ name: 'name', label: 'Tên món', value: m.name, placeholder: 'Ví dụ: Phở bò' }, { name: 'price', label: 'Giá (đồng)', type: 'number', value: m.price }, { name: 'category', label: 'Nhóm', value: m.category, placeholder: 'Món chính, Đồ uống...' }, { name: 'image', label: 'Link ảnh món (URL)', value: m.image, placeholder: 'https://...' }];
     refresh = safe(async () => {
       menu = await get('/api/menu');
       $('#topx').innerHTML = `<button class="btn primary" data-a="new">${ic('plus')}Thêm món</button>`;
       $('#topx').onclick = e => e.target.closest('[data-a="new"]') && addItem();
       const groups = {}; menu.forEach(m => (groups[m.category || 'Khác'] = groups[m.category || 'Khác'] || []).push(m));
-      $v().innerHTML = menu.length ? `<div class="card">${Object.entries(groups).map(([g, ms]) => `<div class="group-h">${esc(g)}</div><div class="list">${ms.map(m => `<div class="li"><div class="grow"><b>${esc(m.name)}</b>${m.available ? '' : '<span class="tag new">Hết món</span>'}</div><b>${money(m.price)}</b><div class="acts"><button class="btn sm icon" data-a="edit" data-id="${m.id}" aria-label="Sửa ${esc(m.name)}">${ic('edit')}</button><button class="btn sm icon danger" data-a="del" data-id="${m.id}" aria-label="Xoá ${esc(m.name)}">${ic('trash')}</button></div></div>`).join('')}</div>`).join('')}</div>` : `<div class="card empty"><b>Thực đơn đang trống</b>Bấm Thêm món để bắt đầu.</div>`;
+      $v().innerHTML = menu.length ? `<div class="card">${Object.entries(groups).map(([g, ms]) => `<div class="group-h">${esc(g)}</div><div class="list">${ms.map(m => `<div class="li">${thumb(m)}<div class="grow"><b>${esc(m.name)}</b>${m.available ? '' : '<span class="tag new">Hết món</span>'}</div><b>${money(m.price)}</b><div class="acts"><button class="btn sm icon" data-a="edit" data-id="${m.id}" aria-label="Sửa ${esc(m.name)}">${ic('edit')}</button><button class="btn sm icon danger" data-a="del" data-id="${m.id}" aria-label="Xoá ${esc(m.name)}">${ic('trash')}</button></div></div>`).join('')}</div>`).join('')}</div>` : `<div class="card empty"><b>Thực đơn đang trống</b>Bấm Thêm món để bắt đầu.</div>`;
     });
     async function addItem() { const r = await formBox('Thêm món', fields(), 'Thêm món'); if (r) await safe(async () => { await post('/api/menu', { ...r, price: +r.price }); toast('Đã thêm món'); })(); }
     on({
-      edit: safe(async el => { const m = menu.find(x => x.id == el.dataset.id); const r = await formBox('Sửa món', fields(m)); if (r) { await put('/api/menu/' + m.id, { name: r.name, price: +r.price, category: r.category }); toast('Đã lưu'); } }),
+      edit: safe(async el => { const m = menu.find(x => x.id == el.dataset.id); const r = await formBox('Sửa món', fields(m)); if (r) { await put('/api/menu/' + m.id, { name: r.name, price: +r.price, category: r.category, image: r.image }); toast('Đã lưu'); } }),
       del: safe(async el => { const m = menu.find(x => x.id == el.dataset.id); if (await confirmBox('Xoá món', `Xoá <b>${esc(m.name)}</b> khỏi thực đơn? Hoá đơn cũ vẫn giữ nguyên.`, 'Xoá món', true)) { await del('/api/menu/' + m.id); toast('Đã xoá món'); } }),
     });
     refresh();

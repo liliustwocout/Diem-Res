@@ -341,3 +341,6 @@ body{font-size:18px;line-height:1.5}
 .rail .brand{padding-bottom:16px}
 @media(max-width:860px){.dog{width:240px}}
 [hidden]{display:none!important}
+
+.tile .pic{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:var(--soft)}
+.li .thumb{width:56px;height:56px;object-fit:cover;border-radius:10px;background:var(--soft);flex:none}
