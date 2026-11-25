@@ -426,3 +426,41 @@ button,a,.tile,.tcard,.pill,.nav{touch-action:manipulation;-webkit-tap-highlight
   .li.user .acts{flex:1 1 100%;display:flex;gap:8px}
   .li.user .acts .btn{flex:1;min-height:44px}
 }
+
+/* ô chọn tự dựng (thay select gốc): xổ ngay trong hộp thoại, không tràn ra ngoài */
+.dd{position:relative}
+.dd-btn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;cursor:pointer}
+.dd-btn .ic{flex:none;transition:transform .15s}.dd-btn[aria-expanded="true"] .ic{transform:rotate(180deg)}
+.dd-btn[aria-expanded="true"]{border-color:var(--jade)}
+.dd-list{margin-top:6px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}
+.dd-list button{display:block;width:100%;text-align:left;padding:13px 16px;min-height:48px;font-size:16px;font-weight:600}
+.dd-list button+button{border-top:1px solid var(--soft)}
+.dd-list button:hover{background:var(--soft)}
+.dd-list button.on{color:var(--jade);background:#e7f3ef}
+
+/* ---- gọn lại trên điện thoại ---- */
+@media(max-width:860px){
+  .main{padding:12px 12px calc(84px + env(safe-area-inset-bottom))}
+  .top{flex-wrap:nowrap;margin-bottom:10px}.top h1{font-size:21px;flex:1;min-width:0}.top .sp{display:none}
+  .top>div:last-child{width:auto;flex:none}
+  #topx .btn{min-height:40px;padding:0 12px;font-size:14px;border-radius:12px}
+  #topx .btn .ic{width:18px;height:18px}
+  .btn{min-height:44px}.btn.lg{min-height:52px}
+  .pill{min-height:36px;padding:5px 13px;font-size:14px}
+  /* thanh lọc ngày: 1 hàng chip + 1 hàng ô ngày cạnh nhau */
+  .toolbar:has(#df){display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:10px}
+  .toolbar:has(#df) .pills{grid-column:1/-1;flex-wrap:nowrap;gap:6px}
+  .toolbar:has(#df) .input{width:100%!important;min-height:42px;font-size:15px;padding:0 10px}
+  .toolbar:has(#df) .muted{font-size:13px}
+  /* số liệu: doanh thu 1 hàng, 3 ô nhỏ cùng hàng */
+  .stats{grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+  .stat{padding:10px 10px}.stat .n{font-size:17px;margin-top:0;white-space:nowrap}.stat small{font-size:11.5px;line-height:1.25;display:block}
+  .stat.hero{padding:14px}.stat.hero .n{font-size:26px}.stat.hero small{font-size:13px}
+  .stat .muted{font-size:13px!important}
+  .card{padding:14px;border-radius:16px}.card h3{font-size:15px;margin-bottom:8px}
+  .bars{height:150px;gap:8px}.bar small,.bar em{font-size:12px}
+  .rank{gap:12px}.rank .r{font-size:14px}
+  .floor{gap:8px}.tcard{min-height:96px;padding:12px}
+  .li{padding:10px 2px}
+}
+@media(max-width:860px){.toolbar:has(#df) .input{min-width:0;box-sizing:border-box;padding:0 6px;font-size:14px}.toolbar:has(#df)>*{min-width:0}}

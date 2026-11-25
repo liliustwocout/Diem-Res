@@ -60,13 +60,24 @@ async function confirmBox(title, text, okText = 'Đồng ý', danger = false) {
 function formBox(title, fields, okText = 'Lưu') {
   return new Promise(resolve => {
     const html = `<h2>${esc(title)}</h2><form>${fields.map(f => `<div class="field"><label for="f_${f.name}">${esc(f.label)}</label>${f.options
-      ? `<select class="input" id="f_${f.name}" name="${f.name}">${f.options.map(([v, l]) => `<option value="${esc(v)}" ${v === f.value ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`
-      : `<input class="input" id="f_${f.name}" name="${f.name}" type="${f.type || 'text'}" value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}" ${f.type === 'number' ? 'inputmode="numeric" min="0"' : ''} autocomplete="off">`}</div>`).join('')}
+      ? `<div class="dd"><input type="hidden" name="${f.name}" value="${esc(f.value ?? f.options[0][0])}"><button type="button" class="input dd-btn" id="f_${f.name}" aria-haspopup="listbox" aria-expanded="false"><span>${esc((f.options.find(o => o[0] === (f.value ?? f.options[0][0])) || f.options[0])[1])}</span>${ic('chev')}</button><div class="dd-list" role="listbox" hidden>${f.options.map(([v, l]) => `<button type="button" role="option" data-v="${esc(v)}" class="${v === (f.value ?? f.options[0][0]) ? 'on' : ''}">${esc(l)}</button>`).join('')}</div></div>`
+      : `<input class="input" id="f_${f.name}" name="${f.name}" type="${f.type || 'text'}" value="${esc(f.value ?? '')}" placeholder="${esc(f.placeholder || '')}" ${f.type === 'number' ? 'inputmode="numeric" min="0"' : ''} autocomplete="${f.type === 'password' ? 'new-password' : 'off'}">`}</div>`).join('')}
       <div class="acts"><button type="button" class="btn" data-m="cancel">Huỷ</button><button type="submit" class="btn primary">${esc(okText)}</button></div></form>`;
     let formEl;
     modal(html).then(() => resolve(null));
     const ov = [...document.querySelectorAll('.overlay')].pop();
     formEl = ov.querySelector('form');
+    formEl.addEventListener('click', e => {
+      const btn = e.target.closest('.dd-btn'), opt = e.target.closest('.dd-list [data-v]');
+      if (btn) { const l = btn.nextElementSibling; l.hidden = !l.hidden; btn.setAttribute('aria-expanded', String(!l.hidden)); return; }
+      if (opt) {
+        const dd = opt.closest('.dd');
+        dd.querySelector('input').value = opt.dataset.v;
+        dd.querySelector('.dd-btn span').textContent = opt.textContent;
+        dd.querySelectorAll('.dd-list button').forEach(b => b.classList.toggle('on', b === opt));
+        dd.querySelector('.dd-list').hidden = true; dd.querySelector('.dd-btn').setAttribute('aria-expanded', 'false');
+      }
+    });
     formEl.onsubmit = e => {
       e.preventDefault();
       const o = Object.fromEntries(new FormData(formEl));
@@ -149,6 +160,7 @@ window.addEventListener('popstate', () => {
   const k = tabOfPath(location.pathname);
   if (k && TABS[me.role].some(t => t[0] === k)) { tab = k; shell(); }
 });
+P.chev = '<path d="M6 9l6 6 6-6"/>';
 P.ban = '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>';
 function start() {
   const want = tabOfPath(location.pathname);
@@ -368,9 +380,14 @@ const V = {
         const r = await formBox('Tạo tài khoản', [{ name: 'name', label: 'Họ tên' }, { name: 'username', label: 'Tên đăng nhập' }, { name: 'password', label: 'Mật khẩu', type: 'password' }, { name: 'role', label: 'Vai trò', value: 'staff', options: Object.entries(ROLE) }], 'Tạo tài khoản');
         if (r) { await post('/api/users', r); toast('Đã tạo tài khoản'); refresh(); }
       });
-      $v().innerHTML = `<div class="card list">${users.map(u => `<div class="li user"><span class="avatar" style="background:var(--jade);color:#fff">${esc((u.name || u.username).charAt(0).toUpperCase())}</span><div class="grow"><b>${esc(u.name)}</b><small>@${esc(u.username)}</small></div><span class="tag">${ROLE[u.role]}</span>${u.active ? '' : '<span class="tag new">Đã khoá</span>'}<div class="acts"><button class="btn sm" data-a="pw" data-id="${u.id}">Đặt lại mật khẩu</button><button class="btn sm ${u.active ? 'danger' : 'ok'}" data-a="lock" data-id="${u.id}" data-v="${u.active ? 0 : 1}">${u.active ? 'Khoá' : 'Mở khoá'}</button></div></div>`).join('')}</div>`;
+      $v().innerHTML = `<div class="card list">${users.map(u => `<div class="li user"><span class="avatar" style="background:var(--jade);color:#fff">${esc((u.name || u.username).charAt(0).toUpperCase())}</span><div class="grow"><b>${esc(u.name)}</b><small>@${esc(u.username)}</small></div><span class="tag">${ROLE[u.role]}</span>${u.active ? '' : '<span class="tag new">Đã khoá</span>'}<div class="acts"><button class="btn sm" data-a="edit" data-id="${u.id}">Sửa</button><button class="btn sm" data-a="pw" data-id="${u.id}">Đặt lại mật khẩu</button><button class="btn sm ${u.active ? 'danger' : 'ok'}" data-a="lock" data-id="${u.id}" data-v="${u.active ? 0 : 1}">${u.active ? 'Khoá' : 'Mở khoá'}</button></div></div>`).join('')}</div>`;
     });
     on({
+      edit: safe(async el => {
+        const u = users.find(x => x.id == el.dataset.id);
+        const r = await formBox('Sửa tài khoản', [{ name: 'name', label: 'Họ tên', value: u.name }, { name: 'username', label: 'Tên đăng nhập', value: u.username }, { name: 'role', label: 'Vai trò', value: u.role, options: Object.entries(ROLE) }]);
+        if (r) { await put('/api/users/' + u.id, { name: r.name, username: r.username, role: r.role }); toast('Đã lưu tài khoản'); refresh(); }
+      }),
       pw: safe(async el => { const u = users.find(x => x.id == el.dataset.id); const r = await formBox('Đặt lại mật khẩu: ' + u.name, [{ name: 'password', label: 'Mật khẩu mới', type: 'password' }]); if (r && r.password) { await put('/api/users/' + u.id, { password: r.password }); toast('Đã đổi mật khẩu'); } }),
       lock: safe(async el => { await put('/api/users/' + el.dataset.id, { active: +el.dataset.v }); toast(el.dataset.v === '0' ? 'Đã khoá tài khoản' : 'Đã mở khoá'); refresh(); }),
     });
