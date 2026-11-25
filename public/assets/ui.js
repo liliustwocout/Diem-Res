@@ -196,7 +196,9 @@ const V = {
     };
     const cur = () => tables.find(t => t.id === sel);
     $v().innerHTML = skeleton(8);
-    refresh = safe(async () => { [tables, menu] = await Promise.all([get('/api/tables'), get('/api/menu')]); paint(); });
+    // Bàn lấy mỗi lần; thực đơn ít đổi nên chỉ tải lại sau 30 giây (bớt một lần gọi server mỗi lượt cập nhật)
+    let menuAt = 0;
+    refresh = safe(async () => { const stale = !menu.length || Date.now() - menuAt > 30000; [tables, menu] = await Promise.all([get('/api/tables'), stale ? get('/api/menu') : menu]); if (stale) menuAt = Date.now(); paint(); });
 
     function paint() { if (sel && !cur()) sel = null; sel ? paintPos() : paintFloor(); }
     function paintFloor() {

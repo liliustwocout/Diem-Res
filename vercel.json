@@ -3,6 +3,7 @@
   "outputDirectory": "public",
   "buildCommand": null,
   "installCommand": "npm install",
+  "regions": ["sin1"],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index" },
     { "source": "/((?!assets/|favicon\\.svg).*)", "destination": "/index.html" }
