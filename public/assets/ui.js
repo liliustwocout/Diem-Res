@@ -136,9 +136,24 @@ const TABS = {
   kitchen: [['kitchen', 'Đơn bếp', 'chef'], ['stock', 'Báo hết món', 'ban']],
   accountant: [['report', 'Doanh thu', 'chart'], ['expenses', 'Chi phí', 'wallet']],
 };
+// Mỗi màn có một đường dẫn riêng (History API), F5 hay gửi link vẫn đúng màn.
+const PATH = { report: '/tong-quan', tables: '/so-do-ban', menu: '/thuc-don', tablesAdm: '/ban', users: '/tai-khoan', kitchen: '/bep', stock: '/het-mon', expenses: '/chi-phi' };
+const tabOfPath = p => Object.keys(PATH).find(k => PATH[k] === p.replace(/\/+$/, ''));
+function goTab(k, replace) {
+  tab = k;
+  if (location.pathname !== PATH[k]) history[replace ? 'replaceState' : 'pushState'](null, '', PATH[k]);
+  shell();
+}
+window.addEventListener('popstate', () => {
+  if (!me) return;
+  const k = tabOfPath(location.pathname);
+  if (k && TABS[me.role].some(t => t[0] === k)) { tab = k; shell(); }
+});
 P.ban = '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>';
 function start() {
-  tab = TABS[me.role][0][0];
+  const want = tabOfPath(location.pathname);
+  tab = want && TABS[me.role].some(t => t[0] === want) ? want : TABS[me.role][0][0];
+  if (location.pathname !== PATH[tab]) history.replaceState(null, '', PATH[tab]);
   if (es) es.close();
   // Không dùng kết nối giữ mở (Vercel không hỗ trợ): tự cập nhật mỗi 3 giây ở màn cần xem trực tiếp.
   clearInterval(poll);
@@ -155,8 +170,9 @@ function shell() {
     <div class="who"><span class="avatar">${esc(me.name.trim().charAt(0).toUpperCase())}</span><div><b>${esc(me.name)}</b><small>${ROLE[me.role]}</small></div><button class="btn" id="out" aria-label="Đăng xuất" title="Đăng xuất">${ic('logout')}</button></div>
   </nav><main class="main"><div class="top"><h1 id="title"></h1><div class="sp"></div><div id="topx" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"></div></div><div id="v"></div></main></div>`;
   $('#title').textContent = t.find(x => x[0] === tab)[1];
-  $('#out').onclick = async () => { await post('/api/logout').catch(() => {}); me = null; showLogin(); };
-  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if (b.dataset.t !== tab) { tab = b.dataset.t; shell(); } });
+  document.title = t.find(x => x[0] === tab)[1] + ' · Diem Res';
+  $('#out').onclick = async () => { await post('/api/logout').catch(() => {}); me = null; history.replaceState(null, '', '/'); showLogin(); };
+  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if (b.dataset.t !== tab) goTab(b.dataset.t); });
   live = []; refresh = () => {};
   V[tab]();
 }

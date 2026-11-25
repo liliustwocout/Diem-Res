@@ -10,7 +10,10 @@ http.createServer((req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname.startsWith('/api/')) return handler(req, res);
   const full = path.join(root, path.normalize(url.pathname === '/' ? '/index.html' : url.pathname));
-  if (!full.startsWith(root) || !fs.existsSync(full) || fs.statSync(full).isDirectory()) { res.writeHead(404); return res.end('Not found'); }
-  res.writeHead(200, { 'Content-Type': MIME[path.extname(full)] || 'application/octet-stream' });
-  fs.createReadStream(full).pipe(res);
+  let file = full;
+  // Đường dẫn của giao diện (/tong-quan, /thuc-don...) đều trả về index.html, như rewrite trên Vercel
+  if (!path.extname(url.pathname)) file = path.join(root, 'index.html');
+  if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end('Not found'); }
+  res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
+  fs.createReadStream(file).pipe(res);
 }).listen(PORT, () => console.log(`Chạy tại http://localhost:${PORT}`));
