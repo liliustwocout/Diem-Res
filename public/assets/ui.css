@@ -530,3 +530,7 @@ button,a,.tile,.tcard,.pill,.nav{touch-action:manipulation;-webkit-tap-highlight
   .top>div:last-child{flex:1;display:flex;justify-content:flex-end}
   .kpis{display:flex;gap:6px}.kpis .tag{font-size:13px;padding:5px 10px}
 }
+
+/* bếp: nút Nhận / Xong cho từng món */
+.ki .btn{flex:none}
+@media(max-width:860px){.ki{padding:10px 12px;gap:10px}.ki .q{font-size:22px;min-width:38px}.ki .nm{font-size:17px}.ki .btn{min-width:84px;min-height:46px;font-size:15px}}

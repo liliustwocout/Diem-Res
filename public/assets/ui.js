@@ -317,11 +317,14 @@ const V = {
         const m = mins(t.since);
         return `<article class="kt ${freshTables.has(t.id) ? 'fresh' : ''}" data-ts="${t.active ? t.since : ''}" data-age="${t.active ? (m >= 12 ? 'late' : m >= 6 ? 'warn' : 'ok') : 'ok'}" style="${t.active ? '' : 'opacity:.55'}">
         <div class="kt-h"><b>${esc(t.t)}</b>${t.active ? `<span class="timer" data-since="${t.since}">${ago(t.since)}</span>` : '<span class="tag done">Hoàn tất</span>'}</div>
-        ${t.items.map(i => `<div class="ki ${i.status}"><span class="q">${i.qty}×</span><span class="nm">${esc(i.name)}</span>${i.status === 'done' ? ic('check') : ''}</div>`).join('')}
+        ${t.items.map(i => `<div class="ki ${i.status}"><span class="q">${i.qty}×</span><span class="nm">${esc(i.name)}</span>${i.status === 'done' ? ic('check') : `<button class="btn sm ${i.status === 'new' ? 'primary' : 'ok'}" data-a="one" data-id="${i.id}" data-s="${i.status === 'new' ? 'cooking' : 'done'}">${i.status === 'new' ? 'Nhận' : 'Xong'}</button>`}</div>`).join('')}
         ${t.active ? `<div class="kt-f">${t.items.some(i => i.status === 'new') ? `<button class="btn lg primary" data-a="all" data-s="cooking" data-oid="${t.id}">Nhận hết đơn</button>` : `<button class="btn lg ok" data-a="all" data-s="done" data-oid="${t.id}">${ic('check')}Xong hết đơn</button>`}</div>` : ''}</article>`;
       }).join('')}</div>` : `<div class="card empty"><b>Chưa có đơn nào</b>Đơn mới sẽ hiện ở đây và có tiếng báo.</div>`;
     });
-    on({ all: safe(async el => { await put('/api/kitchen/order/' + el.dataset.oid, { status: el.dataset.s }); }) });
+    on({
+      all: safe(async el => { await put('/api/kitchen/order/' + el.dataset.oid, { status: el.dataset.s }); }),
+      one: safe(async el => { await put('/api/kitchen/' + el.dataset.id, { status: el.dataset.s }); }),
+    });
     refresh();
   },
   stock() {
